@@ -264,9 +264,10 @@ JSONEditor.prototype = {
     this.translate = this.options.translate || JSONEditor.defaults.translate;
 
     // Fetch all external refs via ajax
+    var fetchUrl = document.location.toString();
     var fileBase = this._getFileBase();
     this._loadExternalRefs(this.schema, function() {
-      self._getDefinitions(self.schema, fileBase + '#/definitions/');
+      self._getDefinitions(self.schema, fetchUrl + '#/definitions/');
       
       // Validator options
       var validator_options = {};
@@ -304,7 +305,7 @@ JSONEditor.prototype = {
         self.trigger('ready');
         self.trigger('change');
       });
-    }, fileBase);
+    }, fetchUrl, fileBase);
   },
   getValue: function() {
     if(!this.ready) throw "JSON Editor not ready yet.  Listen for 'ready' event before getting the value";
@@ -560,7 +561,7 @@ JSONEditor.prototype = {
       }
     }
   },
-  _getExternalRefs: function(schema, fileBase) {
+  _getExternalRefs: function(schema, fetchUrl) {
     var refs = {};
     var merge_refs = function(newrefs) {
       for(var i in newrefs) {
@@ -575,7 +576,7 @@ JSONEditor.prototype = {
       if(schema.$ref.substr(0,1) !== "#" && !this.refs[schema.$ref]) {
         refs[schema.$ref] = true;
       }
-      this.refs_with_info[ref_counter] = { fileBase: fileBase, "$ref": schema.$ref };
+      this.refs_with_info[ref_counter] = { fetchUrl: fetchUrl, "$ref": schema.$ref };
       schema.$ref = ref_counter;
     }
     
@@ -585,12 +586,12 @@ JSONEditor.prototype = {
       if(Array.isArray(schema[i])) {
         for(var j=0; j<schema[i].length; j++) {
           if(schema[i][j] && typeof schema[i][j]==="object") {
-            merge_refs(this._getExternalRefs(schema[i][j], fileBase));
+            merge_refs(this._getExternalRefs(schema[i][j], fetchUrl));
           }
         }
       }
       else {
-        merge_refs(this._getExternalRefs(schema[i], fileBase));
+        merge_refs(this._getExternalRefs(schema[i], fetchUrl));
       }
     }
     return refs;
@@ -607,9 +608,9 @@ JSONEditor.prototype = {
     pathItems.pop();
     return pathItems.join("/")+"/";
   },
-  _loadExternalRefs: function(schema, callback, fileBase) {
+  _loadExternalRefs: function(schema, callback, fetchUrl, fileBase) {
     var self = this;
-    var refs = this._getExternalRefs(schema, fileBase);
+    var refs = this._getExternalRefs(schema, fetchUrl);
     var done = 0, waiting = 0, callback_fired = false;
 
     $each(refs,function(url) {
@@ -639,6 +640,7 @@ JSONEditor.prototype = {
           if(!response || typeof response !== "object") throw "External ref does not contain a valid schema - "+fetchUrl;
           
           self.refs[url] = response;
+          var fileBase = self._getFileBaseFromFileLocation(fetchUrl);
           self._getDefinitions(response, fetchUrl + "#/definitions/");
           self._loadExternalRefs(response,function() {
             done++;
@@ -646,7 +648,7 @@ JSONEditor.prototype = {
               callback_fired = true;
               callback();
             }
-          }, fetchUrl);
+          }, fetchUrl, fileBase);
         }
         // Request failed
         else {
@@ -667,12 +669,12 @@ JSONEditor.prototype = {
     while (schema.$ref) {
       var refObj = this.refs_with_info[schema.$ref];
       delete schema.$ref;
-      var fB = "";
+      var fetchUrl = "";
       if (refObj.$ref.startsWith("#")) {
-        fB = refObj.fileBase;
+        fetchUrl = refObj.fetchUrl;
       }
-      var ref = fB + refObj.$ref;
-      if(!this.refs[ref]) ref = fB + decodeURIComponent(refObj.$ref);
+      var ref = fetchUrl + refObj.$ref;
+      if(!this.refs[ref]) ref = fetchUrl + decodeURIComponent(refObj.$ref);
       schema = this.extendSchemas(schema, $extend({},this.refs[ref]));
     }
     return schema;
