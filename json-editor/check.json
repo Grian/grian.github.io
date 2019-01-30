@@ -1,0 +1,51 @@
+{
+  "$id": "/steps/deploy/kubernetes/check#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Container check",
+  "description": "Kubernetes container health check description",
+  "definitions": {
+    "base": {
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "description": "Check timeout in seconds",
+          "default": 3
+        },
+        "port": {
+          "type": "integer",
+          "description": "Check method port"
+        },
+        "path": {
+          "type": "string",
+          "description": "Check method path"
+        }
+      }
+    }
+  },
+  "properties": {
+    "health":  {
+      "type": "object",
+      "$ref": "#/definitions/base"
+    },
+    "ready": {
+      "type": "object",
+      "$ref": "#/definitions/base",
+      "required": [
+        "port",
+        "path",
+        "timeout"
+      ],
+      "defaultProperties": [
+        "port",
+        "path",
+        "timeout"
+      ]
+    }
+  },
+  "required": [
+    "ready",
+    "health"
+  ]
+}

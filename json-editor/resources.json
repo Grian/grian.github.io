@@ -1,0 +1,34 @@
+{
+  "$id": "/steps/deploy/kubernetes/resources#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Kubernetes resources",
+  "description": "Kubernetes container resources",
+  "definitions": {
+    "base": {
+      "type": "object",
+      "description": "Resources count",
+      "properties": {
+        "mem": {
+          "type": "integer",
+          "description": "Memory count"
+        },
+        "cpu": {
+          "type": "integer",
+          "description": "CPU count"
+        }
+      }
+    }
+  },
+  "properties": {
+    "limits": {
+      "$ref": "#/definitions/base"
+    },
+    "requested": {
+      "$ref": "#/definitions/base"
+    }
+  },
+  "required": [
+    "limits", "requested"
+  ]
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Confer Editor</title>
+	<!--
+    <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+	-->
+	<script src="src/jsoneditor.js"></script>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<!-- <link rel="stylesheet" href="/resources/demos/style.css"> -->
+	<!-- TODO: async jquery loading -->
+	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  </head>
+  <body>
+<style>
+.red { color: #a00000 }
+#messages, #repo_check { margin: 4px 6px }
+#createPath { display: none }
+#repo_save{ display: none }
+#repo_check{ display: none }
+</style>
+<script>
+var initial_value = {};
+</script>
+    <h1>Confer Editor</h1>
+	<div>
+		<div class="ui-widget">
+			<label for="tags">Repo: </label>
+			<input id="tags" value="STAR/newrepo42">
+			&nbsp;
+			<button id='repo_check'>Check</button>
+			<span id='repo_check_status'>&nbsp;</span>
+			<span id="messages" class="red"></span>
+			<button id='repo_save'>Save</button>
+
+		</div>
+	</div>
+	<div id='wrapEditor'>
+    <button id='submit'>Submit (console.log)</button>
+    <button id='restore'>Restore to Default</button>
+    <button id='enable_disable'>Disable/Enable Form</button>
+    <span id='valid_indicator'></span>
+    <div id='editor_holder'></div>
+	</div>
+    <script>
+		var editor = new JSONEditor(document.getElementById('editor_holder'),{
+			ajax: true,
+			//++ без этих двух свойств хреново работает
+			// Disable additional properties
+			no_additional_properties: true,
+			// Require all properties by default
+			required_by_default: true,
+			startval: initial_value,
+			schema:
+{
+  "type": "object",
+  "title": "Deployment",
+  "description": "Kubernetes container resources",
+  "properties": {
+    "check":  { "$ref": "check.json" },
+    "limits": { "$ref": "resources.json" }
+  },
+}
+		});
+		// TODO: need fixup
+		editor.on('ready', function(){
+			editorReady = true;
+		})
+
+		// Hook up the submit button to log to the console
+		document.getElementById('submit').addEventListener('click',function() {
+			// Get the value from the editor
+			console.log(editor.getValue());
+		});
+		// Hook up the Restore to Default button
+		document.getElementById('restore').addEventListener('click',function() {
+			editor.setValue(starting_value);
+		});
+		// Hook up the enable/disable button
+		document.getElementById('enable_disable').addEventListener('click',function() {
+			// Enable form
+			if(!editor.isEnabled()) {
+				editor.enable();
+			}
+			// Disable form
+			else {
+				editor.disable();
+			}
+		});
+		// Hook up the validation indicator to update its
+		// status whenever the editor changes
+		editor.on('change',function() {
+			// Get an array of errors from the validator
+			var errors = editor.validate();
+			
+			var indicator = document.getElementById('valid_indicator');
+			
+			// Not valid
+			if(errors.length) {
+				indicator.style.color = 'red';
+				indicator.textContent = "not valid";
+				console.log(errors);
+			}
+			// Valid
+			else {
+				indicator.style.color = 'green';
+				indicator.textContent = "valid";
+			}
+		});
+    </script>
+  </body>
+</html>
